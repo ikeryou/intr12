@@ -73,15 +73,15 @@
         // dest.rb *= texture2D(tDiffuse, vUv + zure1).r;
 
         float kakeC = 10000.0;
-        dest.r += step(0.5, sin(vUv.y * 10.0 * kakeC + time * 0.01));
-        dest.g += step(0.5, sin(vUv.y * 10.0 * kakeC + time * 0.01));
+        dest.r += step(0.25, sin(vUv.y * 10.0 * kakeC + time * 0.01));
+        dest.g += step(0.5, cos(vUv.y * 10.0 * kakeC + time * -0.02));
         dest.r += step(0.5, cos(vUv.y * 10.0 * kakeC + time * 0.01));
 
 
         // dest.rgb -= (1.0 - dest.rgb) * step(0.75, dest.r);
 
         dest.rgb = 1.0 - dest.rgb;
-        dest.rgb *= pow(dest.b, 10.0);
+        // dest.rgb += pow(dest.r, 10.0);
 
 
         gl_FragColor = dest;
@@ -135,7 +135,7 @@
         // vec2 zure = vec2(sin(vUv.y * base.r + time * 0.1) * cos(vUv.x * base.r + time * 0.1) * 0.05, 0.0);
         // vec4 dest = texture2D(tDiffuse, vUv + zure);
         // vec4 dest = texture2D(tDiffuse, ripple(base.rb, 0.00001, 0.0001, 0.01));
-        vec4 dest = texture2D(tDiffuse, ripple(vec2(0.0), pow(base.r, 30.0) * 0.015, 0.0015, 0.015));
+        vec4 dest = texture2D(tDiffuse, ripple(vec2(0.0), pow(base.r, 30.0) * 0.015, 0.0015, 0.025));
 
         // dest.rg += sin(vUv.y * 12.0 + time * 1.1) * 0.1;
 
@@ -145,9 +145,10 @@
         // }
 
         dest.rgb = 1.0 - dest.rgb;
-        dest.rgb *= pow(dest.r, 10.0);
+        dest.rgb *= pow(dest.r, 30.0);
 
         gl_FragColor = dest;
+        // gl_FragColor = texture2D(tDiffuse, vUv);
 
       }
 

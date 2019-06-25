@@ -137,7 +137,7 @@ function update() {
 
   // シェーダーに渡す変数の更新
   _dest.material.uniforms.time.value += 0.2;
-  _dest2.material.uniforms.time.value += 0.1;
+  _dest2.material.uniforms.time.value += 0.2;
   _dest2.material.uniforms.resolution.value.set(sw * window.devicePixelRatio, sh * window.devicePixelRatio);
 
   // 出力用メッシュを画面サイズに
