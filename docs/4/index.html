@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:og="http://ogp.me/ns#" xmlns:fb="http://www.facebook.com/2008/fbml">
+  <head>
+    <title>第12回インタラ会 作品</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, width=device-width">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <style type="text/css">
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body, html {
+        width: 100%;
+        height: 100%;
+      }
+      .mv {
+        position: fixed;
+        width: 100%;
+        height: 100%;
+      }
+    </style>
+
+    <!-- ########################################## -->
+    <!-- vertexシェーダー -->
+    <!-- ########################################## -->
+    <script id="vBasic" type="x-shader/x-vertex">
+
+      varying vec2 vUv;
+
+      void main() {
+        vUv = uv;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+
+    </script>
+
+    <!-- ########################################## -->
+    <!-- fragmentシェーダー -->
+    <!-- ゆらゆらエフェクトはここをいじる -->
+    <!-- ########################################## -->
+    <script id="fBasic" type="x-shader/x-fragment">
+
+      uniform sampler2D tDiffuse;
+      uniform float time;
+
+      varying vec2 vUv;
+
+      void main() {
+
+        float kakeA = sin(time * 0.02) * 1000.0;
+        float kakeB = cos(time * 0.01) * 1.0;
+
+        vec2 zure1 = vec2(sin(vUv.x * kakeA + time * 0.1) * sin(vUv.x * kakeA + time * 0.1) * kakeB, 0.0);
+        vec2 zure2 = vec2(cos(vUv.x * kakeA + time * 0.1) * cos(vUv.x * kakeA + time * 0.1) * kakeB, 0.0);
+        vec2 zure3 = vec2(0.0, sin(vUv.x * kakeA + time * 0.1) * cos(vUv.x * kakeA + time * 0.1) * kakeB);
+
+        vec4 dest = abs(texture2D(tDiffuse, vUv + zure1) - texture2D(tDiffuse, vUv + zure1 * -1.0));
+
+        // 色をずらすこともできる
+        // dest.rg += sin(vUv.y * 12.0 + time * 0.1) * 0.1;
+        // dest.rb += cos(vUv.x * 12.0 + time * 0.1) * 0.1;
+
+
+        dest *= abs(texture2D(tDiffuse, vUv + zure3) - texture2D(tDiffuse, vUv + zure1 * -1.0));
+
+        dest += texture2D(tDiffuse, vUv + zure2);
+        dest -= texture2D(tDiffuse, vUv + zure1);
+        // dest.b *= texture2D(tDiffuse, vUv + zure3).r;
+
+        dest.a = 1.0;
+        // dest.rb *= texture2D(tDiffuse, vUv + zure1).r;
+
+        float kakeC = 10000.0;
+        dest.r += step(0.5, sin(vUv.y * 10.0 * kakeC + time * 0.01));
+        dest.g += step(0.5, sin(vUv.y * 10.0 * kakeC + time * -0.02));
+        dest.r += step(0.5, cos(vUv.y * 10.0 * kakeC + time * 0.01));
+
+
+        // dest.rgb -= (1.0 - dest.rgb) * step(0.75, dest.r);
+
+        dest.rgb = 1.0 - dest.rgb;
+        // dest.rgb *= pow(dest.g, 10.0);
+
+
+        gl_FragColor = dest;
+
+      }
+
+    </script>
+
+
+
+    <!-- ########################################## -->
+    <!-- fragmentシェーダー -->
+    <!-- ゆらゆらエフェクトはここをいじる -->
+    <!-- ########################################## -->
+    <script id="fBasic2" type="x-shader/x-fragment">
+
+      uniform sampler2D tDiffuse;
+      uniform float time;
+      uniform vec2 resolution;
+
+      varying vec2 vUv;
+
+
+      float map(float value, float beforeMin, float beforeMax, float afterMin, float afterMax) {
+        return afterMin + (afterMax - afterMin) * ((value - beforeMin) / (beforeMax - beforeMin));
+      }
+
+
+      vec2 ripple(vec2 center, float wave, float range, float strength) {
+
+        vec2 cPos = vec2(gl_FragCoord) - resolution * 0.5;
+        cPos -= center * resolution * 0.5;
+
+        float cLength = distance(cPos, vec2(0.0));
+
+        float v = min(resolution.x, resolution.y) * 1.0;
+        float k = map(cLength, wave * v, 0.0, 0.0, range * v);
+        vec2 offset = cPos / cLength * sin(cLength * strength - time * 0.1) * k;
+
+        return vUv + offset * (1.0 / resolution);
+
+      }
+
+
+
+      void main() {
+
+        vec4 base = texture2D(tDiffuse, vUv);
+
+        // float kake = 20.0;
+        // vec2 zure = vec2(sin(vUv.y * base.r + time * 0.1) * cos(vUv.x * base.r + time * 0.1) * 0.05, 0.0);
+        // vec4 dest = texture2D(tDiffuse, vUv + zure);
+        // vec4 dest = texture2D(tDiffuse, ripple(base.rb, 0.00001, 0.0001, 0.01));
+        vec4 dest = texture2D(tDiffuse, ripple(vec2(0.0), pow(base.r, 30.0) * 0.015, 0.0025, 0.005));
+
+        // dest.rg += sin(vUv.y * 12.0 + time * 1.1) * 0.1;
+
+        // vec4 dest = texture2D(tDiffuse, vUv + zure);
+        // if(base.g >= 0.5) {
+        //   dest.rgb = 1.0 - dest.rgb;
+        // }
+
+        dest.rgb = 1.0 - dest.rgb;
+        dest.rgb *= pow(dest.r, 10.0);
+
+        gl_FragColor = dest;
+
+      }
+
+    </script>
+
+  </head>
+  <body>
+
+    <canvas class="mv"></canvas>
+
+    <script src="../libs/jquery.min.js"></script>
+    <script src="../libs/three.js"></script>
+    <script src="../libs/utils.js"></script>
+    <script src="main.js"></script>
+
+  </body>
+</html>
